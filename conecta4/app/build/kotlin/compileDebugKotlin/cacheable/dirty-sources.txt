@@ -1,0 +1,4 @@
+C:\Users\Gonzalez\AndroidStudioProjects\conecta4Kotlin\conecta4\app\src\main\java\com\example\conecta4\MainActivity.kt
+C:\Users\Gonzalez\AndroidStudioProjects\conecta4Kotlin\conecta4\app\src\main\java\com\example\conecta4\ui\theme\Color.kt
+C:\Users\Gonzalez\AndroidStudioProjects\conecta4Kotlin\conecta4\app\src\main\java\com\example\conecta4\ui\theme\Theme.kt
+C:\Users\Gonzalez\AndroidStudioProjects\conecta4Kotlin\conecta4\app\src\main\java\com\example\conecta4\ui\theme\Type.kt
