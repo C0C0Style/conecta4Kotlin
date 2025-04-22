@@ -127,3 +127,46 @@ fun PantallaPrincipal() {
         }
     }
 }
+
+fun buscarFilaDisponible(tablero: List<MutableList<Int>>, col: Int): Int {
+    for (fila in tablero.indices.reversed()) {
+        if (tablero[fila][col] == 0) return fila
+    }
+    return -1
+}
+
+fun elegirJugadaMaquina(tablero: List<MutableList<Int>>): Int {
+    val columnasDisponibles = (0..6).filter { col -> buscarFilaDisponible(tablero, col) != -1 }
+    return columnasDisponibles.random()
+}
+
+@Composable
+fun Tablero(
+    tablero: List<MutableList<Int>>,
+    posicionesAnimadas: List<List<Animatable<Float, AnimationVector1D>>>,
+    celdasGanadoras: List<Pair<Int, Int>>,
+    onColClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .background(Color(0xFF1976D2))
+            .padding(8.dp)
+            .shadow(4.dp)
+    ) {
+        for ((filaIndex, fila) in tablero.withIndex()) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((colIndex, celda) in fila.withIndex()) {
+                    Celda(
+                        ficha = celda,
+                        offsetY = posicionesAnimadas[filaIndex][colIndex].value.dp,
+                        parpadea = celdasGanadoras.contains(filaIndex to colIndex),
+                        onClick = { onColClick(colIndex) }
+                    )
+                }
+            }
+        }
+    }
+}
