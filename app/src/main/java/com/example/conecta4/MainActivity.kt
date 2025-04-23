@@ -51,6 +51,8 @@ fun PantallaPrincipal() {
     var mensaje by remember { mutableStateOf("Tu turno 🔴") }
     var juegoFinalizado by remember { mutableStateOf(false) }
     var celdasGanadoras by remember { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
+    var puedeJugar by remember { mutableStateOf(true) }
+
     val scope = rememberCoroutineScope()
 
     fun reiniciarJuego() {
@@ -64,9 +66,11 @@ fun PantallaPrincipal() {
         mensaje = "Tu turno 🔴"
         juegoFinalizado = false
         celdasGanadoras = emptyList()
+        puedeJugar = true
     }
 
     fun jugarTurno(col: Int, jugador: Int) {
+        puedeJugar = false
         val filaDisponible = buscarFilaDisponible(tablero, col)
         if (filaDisponible != -1) {
             scope.launch {
@@ -94,9 +98,13 @@ fun PantallaPrincipal() {
                         delay(800)
                         val colMaquina = elegirJugadaMaquina(tablero)
                         jugarTurno(colMaquina, 2)
+                    } else if (turnoJugador == 1 && !juegoFinalizado) {
+                        puedeJugar = true
                     }
                 }
             }
+        } else {
+            puedeJugar = true
         }
     }
 
@@ -113,7 +121,7 @@ fun PantallaPrincipal() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Tablero(tablero, posicionesAnimadas, celdasGanadoras) { col ->
-            if (!juegoFinalizado && turnoJugador == 1) {
+            if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
                 jugarTurno(col, 1)
             }
         }
@@ -127,58 +135,19 @@ fun PantallaPrincipal() {
         }
     }
 }
+
 fun buscarFilaDisponible(tablero: List<MutableList<Int>>, col: Int): Int {
     for (fila in tablero.indices.reversed()) {
         if (tablero[fila][col] == 0) return fila
     }
     return -1
 }
-fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int>> {
-    val filas = tablero.size
-    val columnas = tablero[0].size
 
-    // Horizontal
-    for (fila in 0 until filas) {
-        for (col in 0 until columnas - 3) {
-            if ((0..3).all { offset -> tablero[fila][col + offset] == jugador }) {
-                return (0..3).map { offset -> fila to (col + offset) }
-            }
-        }
-    }
-
-    // Vertical
-    for (col in 0 until columnas) {
-        for (fila in 0 until filas - 3) {
-            if ((0..3).all { offset -> tablero[fila + offset][col] == jugador }) {
-                return (0..3).map { offset -> (fila + offset) to col }
-            }
-        }
-    }
-
-    // Diagonal ↘
-    for (fila in 0 until filas - 3) {
-        for (col in 0 until columnas - 3) {
-            if ((0..3).all { offset -> tablero[fila + offset][col + offset] == jugador }) {
-                return (0..3).map { offset -> (fila + offset) to (col + offset) }
-            }
-        }
-    }
-
-    // Diagonal ↙
-    for (fila in 3 until filas) {
-        for (col in 0 until columnas - 3) {
-            if ((0..3).all { offset -> tablero[fila - offset][col + offset] == jugador }) {
-                return (0..3).map { offset -> (fila - offset) to (col + offset) }
-            }
-        }
-    }
-
-    return emptyList()
-}
 fun elegirJugadaMaquina(tablero: List<MutableList<Int>>): Int {
     val columnasDisponibles = (0..6).filter { col -> buscarFilaDisponible(tablero, col) != -1 }
     return columnasDisponibles.random()
 }
+
 @Composable
 fun Tablero(
     tablero: List<MutableList<Int>>,
@@ -209,6 +178,7 @@ fun Tablero(
         }
     }
 }
+
 @Composable
 fun Celda(ficha: Int, offsetY: Dp, parpadea: Boolean, onClick: () -> Unit) {
     val fichaColor = when (ficha) {
@@ -252,4 +222,47 @@ fun Celda(ficha: Int, offsetY: Dp, parpadea: Boolean, onClick: () -> Unit) {
             )
         }
     }
+}
+
+fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int>> {
+    val filas = tablero.size
+    val columnas = tablero[0].size
+
+    // Horizontal
+    for (fila in 0 until filas) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila][col + offset] == jugador }) {
+                return (0..3).map { offset -> fila to (col + offset) }
+            }
+        }
+    }
+
+    // Vertical
+    for (col in 0 until columnas) {
+        for (fila in 0 until filas - 3) {
+            if ((0..3).all { offset -> tablero[fila + offset][col] == jugador }) {
+                return (0..3).map { offset -> (fila + offset) to col }
+            }
+        }
+    }
+
+    // Diagonal ↘
+    for (fila in 0 until filas - 3) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila + offset][col + offset] == jugador }) {
+                return (0..3).map { offset -> (fila + offset) to (col + offset) }
+            }
+        }
+    }
+
+    // Diagonal ↙
+    for (fila in 3 until filas) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila - offset][col + offset] == jugador }) {
+                return (0..3).map { offset -> (fila - offset) to (col + offset) }
+            }
+        }
+    }
+
+    return emptyList()
 }
