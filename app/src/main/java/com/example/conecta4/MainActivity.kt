@@ -127,5 +127,129 @@ fun PantallaPrincipal() {
         }
     }
 }
+fun buscarFilaDisponible(tablero: List<MutableList<Int>>, col: Int): Int {
+    for (fila in tablero.indices.reversed()) {
+        if (tablero[fila][col] == 0) return fila
+    }
+    return -1
+}
+fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int>> {
+    val filas = tablero.size
+    val columnas = tablero[0].size
 
-//continuar codigo
+    // Horizontal
+    for (fila in 0 until filas) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila][col + offset] == jugador }) {
+                return (0..3).map { offset -> fila to (col + offset) }
+            }
+        }
+    }
+
+    // Vertical
+    for (col in 0 until columnas) {
+        for (fila in 0 until filas - 3) {
+            if ((0..3).all { offset -> tablero[fila + offset][col] == jugador }) {
+                return (0..3).map { offset -> (fila + offset) to col }
+            }
+        }
+    }
+
+    // Diagonal ↘
+    for (fila in 0 until filas - 3) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila + offset][col + offset] == jugador }) {
+                return (0..3).map { offset -> (fila + offset) to (col + offset) }
+            }
+        }
+    }
+
+    // Diagonal ↙
+    for (fila in 3 until filas) {
+        for (col in 0 until columnas - 3) {
+            if ((0..3).all { offset -> tablero[fila - offset][col + offset] == jugador }) {
+                return (0..3).map { offset -> (fila - offset) to (col + offset) }
+            }
+        }
+    }
+
+    return emptyList()
+}
+fun elegirJugadaMaquina(tablero: List<MutableList<Int>>): Int {
+    val columnasDisponibles = (0..6).filter { col -> buscarFilaDisponible(tablero, col) != -1 }
+    return columnasDisponibles.random()
+}
+@Composable
+fun Tablero(
+    tablero: List<MutableList<Int>>,
+    posicionesAnimadas: List<List<Animatable<Float, AnimationVector1D>>>,
+    celdasGanadoras: List<Pair<Int, Int>>,
+    onColClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .background(Color(0xFF1976D2))
+            .padding(8.dp)
+            .shadow(4.dp)
+    ) {
+        for ((filaIndex, fila) in tablero.withIndex()) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((colIndex, celda) in fila.withIndex()) {
+                    Celda(
+                        ficha = celda,
+                        offsetY = posicionesAnimadas[filaIndex][colIndex].value.dp,
+                        parpadea = celdasGanadoras.contains(filaIndex to colIndex),
+                        onClick = { onColClick(colIndex) }
+                    )
+                }
+            }
+        }
+    }
+}
+@Composable
+fun Celda(ficha: Int, offsetY: Dp, parpadea: Boolean, onClick: () -> Unit) {
+    val fichaColor = when (ficha) {
+        1 -> Color.Red
+        2 -> Color.Yellow
+        else -> Color.Transparent
+    }
+
+    val bordeColor = Color(0xFF0D47A1)
+    val alphaAnim = rememberInfiniteTransition(label = "parpadeo").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ), label = "alpha"
+    )
+
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .size(60.dp)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .background(bordeColor, shape = CircleShape)
+        )
+
+        if (ficha != 0) {
+            Box(
+                modifier = Modifier
+                    .offset(y = offsetY)
+                    .size(40.dp)
+                    .background(
+                        color = fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
+                        shape = CircleShape
+                    )
+            )
+        }
+    }
+}
