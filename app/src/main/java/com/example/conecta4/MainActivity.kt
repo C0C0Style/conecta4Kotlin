@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -21,6 +22,9 @@ import com.example.conecta4.ui.theme.Conecta4Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +58,8 @@ fun PantallaPrincipal() {
     var puedeJugar by remember { mutableStateOf(true) }
 
     val scope = rememberCoroutineScope()
+
+    val scrollH = rememberScrollState()
 
     fun reiniciarJuego() {
         for (fila in 0..5) {
@@ -120,9 +126,11 @@ fun PantallaPrincipal() {
         Text(text = mensaje, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(32.dp))
 
-        Tablero(tablero, posicionesAnimadas, celdasGanadoras) { col ->
-            if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
-                jugarTurno(col, 1)
+        Box(modifier = Modifier.horizontalScroll(scrollH)) {
+            Tablero(tablero, posicionesAnimadas, celdasGanadoras) { col ->
+                if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
+                    jugarTurno(col, 1)
+                }
             }
         }
 
