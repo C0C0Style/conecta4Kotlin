@@ -1,12 +1,12 @@
 package com.example.conecta4
 
+import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -21,11 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.example.conecta4.ui.theme.Conecta4Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 
-
+// Actividad principal que maneja la interfaz de usuario
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,37 +32,37 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PantallaPrincipal()
+                    PantallaPrincipal() // Pantalla principal del juego
                 }
             }
         }
     }
 }
 
+// Pantalla principal que maneja el estado del juego
 @Composable
 fun PantallaPrincipal() {
-    val tablero = remember {
-        List(6) { mutableStateListOf(*Array(7) { 0 }) }
-    }
-    val posicionesAnimadas = remember {
-        List(6) { MutableList(7) { Animatable(-300f) } }
-    }
+    // Inicialización del tablero con 6 filas y 7 columnas (tablero de Conecta 4)
+    val tablero = remember { List(6) { mutableStateListOf(*Array(7) { 0 }) } }
+    // Lista que guarda las animaciones de las fichas que caen en el tablero
+    val posicionesAnimadas = remember { List(6) { MutableList(7) { Animatable(-300f) } } }
 
+    // Estado que gestiona el turno del jugador y otros estados del juego
     var turnoJugador by remember { mutableStateOf(1) }
     var mensaje by remember { mutableStateOf("Tu turno 🔴") }
     var juegoFinalizado by remember { mutableStateOf(false) }
     var celdasGanadoras by remember { mutableStateOf<List<Pair<Int, Int>>>(emptyList()) }
     var puedeJugar by remember { mutableStateOf(true) }
 
+    // Scope de corutinas para manejar animaciones y lógica asíncrona
     val scope = rememberCoroutineScope()
 
-    val scrollH = rememberScrollState()
-
+    // Función para reiniciar el juego
     fun reiniciarJuego() {
         for (fila in 0..5) {
             for (col in 0..6) {
-                tablero[fila][col] = 0
-                posicionesAnimadas[fila][col] = Animatable(-300f)
+                tablero[fila][col] = 0 // Limpiar el tablero
+                posicionesAnimadas[fila][col] = Animatable(-300f) // Reiniciar las animaciones
             }
         }
         turnoJugador = 1
@@ -75,35 +72,39 @@ fun PantallaPrincipal() {
         puedeJugar = true
     }
 
+    // Función que maneja el turno de un jugador
     fun jugarTurno(col: Int, jugador: Int) {
         puedeJugar = false
-        val filaDisponible = buscarFilaDisponible(tablero, col)
-        if (filaDisponible != -1) {
+        val filaDisponible = buscarFilaDisponible(tablero, col) // Busca la fila donde se puede colocar la ficha
+        if (filaDisponible != -1) { // Si hay una fila disponible
             scope.launch {
-                tablero[filaDisponible][col] = jugador
+                tablero[filaDisponible][col] = jugador // Coloca la ficha en el tablero
+                // Animación de la ficha que cae
                 posicionesAnimadas[filaDisponible][col].snapTo(-300f)
                 posicionesAnimadas[filaDisponible][col].animateTo(
                     targetValue = 0f,
                     animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
                 )
 
+                // Verificar si hay un ganador después de colocar la ficha
                 val ganadoras = verificarGanador(tablero, jugador)
-                if (ganadoras.isNotEmpty()) {
+                if (ganadoras.isNotEmpty()) { // Si hay un ganador
                     celdasGanadoras = ganadoras
                     val emoji = if (jugador == 1) "🔴" else "🟡"
                     mensaje = "🎉 ¡${if (jugador == 1) "Tú" else "La máquina"} gana! $emoji"
                     juegoFinalizado = true
-                } else if (tablero.all { fila -> fila.all { it != 0 } }) {
+                } else if (tablero.all { fila -> fila.all { it != 0 } }) { // Si el tablero está lleno (empate)
                     mensaje = "Empate 🤝"
                     juegoFinalizado = true
-                } else {
+                } else { // Si el juego sigue
                     turnoJugador = if (jugador == 1) 2 else 1
                     mensaje = if (turnoJugador == 1) "Tu turno 🔴" else "Turno de la máquina 🟡"
 
+                    // Si es el turno de la máquina, realiza su jugada automáticamente
                     if (turnoJugador == 2 && !juegoFinalizado) {
                         delay(800)
-                        val colMaquina = elegirJugadaMaquina(tablero)
-                        jugarTurno(colMaquina, 2)
+                        val colMaquina = elegirJugadaMaquina(tablero) // Elige la columna para la máquina
+                        jugarTurno(colMaquina, 2) // La máquina realiza su jugada
                     } else if (turnoJugador == 1 && !juegoFinalizado) {
                         puedeJugar = true
                     }
@@ -114,6 +115,7 @@ fun PantallaPrincipal() {
         }
     }
 
+    // Diseño de la interfaz con el tablero y los controles del juego
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -126,16 +128,20 @@ fun PantallaPrincipal() {
         Text(text = mensaje, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(32.dp))
 
-        Box(modifier = Modifier.horizontalScroll(scrollH)) {
-            Tablero(tablero, posicionesAnimadas, celdasGanadoras) { col ->
-                if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
-                    jugarTurno(col, 1)
-                }
+        // Mostrar el tablero y permitir la interacción
+        Tablero(
+            tablero,
+            posicionesAnimadas,
+            celdasGanadoras
+        ) { col ->
+            if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
+                jugarTurno(col, 1)
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Mostrar botón para reiniciar el juego si está finalizado
         if (juegoFinalizado) {
             Button(onClick = { reiniciarJuego() }) {
                 Text("Reiniciar Juego")
@@ -144,18 +150,21 @@ fun PantallaPrincipal() {
     }
 }
 
+// Función que busca la primera fila disponible en una columna
 fun buscarFilaDisponible(tablero: List<MutableList<Int>>, col: Int): Int {
     for (fila in tablero.indices.reversed()) {
-        if (tablero[fila][col] == 0) return fila
+        if (tablero[fila][col] == 0) return fila // Devuelve la primera fila libre
     }
-    return -1
+    return -1 // Si no hay fila disponible, devuelve -1
 }
 
+// Función que elige la jugada de la máquina
 fun elegirJugadaMaquina(tablero: List<MutableList<Int>>): Int {
     val columnasDisponibles = (0..6).filter { col -> buscarFilaDisponible(tablero, col) != -1 }
-    return columnasDisponibles.random()
+    return columnasDisponibles.random() // Elige una columna al azar de las disponibles
 }
 
+// Componente que representa el tablero de juego
 @Composable
 fun Tablero(
     tablero: List<MutableList<Int>>,
@@ -163,23 +172,33 @@ fun Tablero(
     celdasGanadoras: List<Pair<Int, Int>>,
     onColClick: (Int) -> Unit
 ) {
+    val outerPad = 16.dp          // margen externo más amplio
+    val innerPad = 6.dp           // espacio entre celdas/filas
+
+    // Sección del tablero, que contiene las filas y columnas de celdas
     Column(
         modifier = Modifier
+            .padding(horizontal = outerPad, vertical = outerPad / 2)
             .background(Color(0xFF1976D2))
-            .padding(8.dp)
             .shadow(4.dp)
+            .padding(outerPad)
     ) {
-        for ((filaIndex, fila) in tablero.withIndex()) {
+        tablero.forEachIndexed { filaIdx, fila ->
             Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = innerPad),
+                horizontalArrangement = Arrangement.spacedBy(innerPad)
             ) {
-                for ((colIndex, celda) in fila.withIndex()) {
+                fila.forEachIndexed { colIdx, celda ->
                     Celda(
                         ficha = celda,
-                        offsetY = posicionesAnimadas[filaIndex][colIndex].value.dp,
-                        parpadea = celdasGanadoras.contains(filaIndex to colIndex),
-                        onClick = { onColClick(colIndex) }
+                        offsetY = posicionesAnimadas[filaIdx][colIdx].value.dp,
+                        parpadea = celdasGanadoras.contains(filaIdx to colIdx),
+                        onClick = { onColClick(colIdx) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
                     )
                 }
             }
@@ -187,56 +206,64 @@ fun Tablero(
     }
 }
 
+// Componente que representa una celda del tablero
 @Composable
-fun Celda(ficha: Int, offsetY: Dp, parpadea: Boolean, onClick: () -> Unit) {
+fun Celda(
+    ficha: Int,
+    offsetY: Dp,
+    parpadea: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val fichaColor = when (ficha) {
-        1 -> Color.Red
-        2 -> Color.Yellow
-        else -> Color.Transparent
+        1 -> Color.Red // Ficha del jugador 1 (roja)
+        2 -> Color.Yellow // Ficha del jugador 2 (amarilla)
+        else -> Color.Transparent // Sin ficha (vacío)
     }
 
-    val bordeColor = Color(0xFF0D47A1)
-    val alphaAnim = rememberInfiniteTransition(label = "parpadeo").animateFloat(
+    val bordeColor = Color(0xFF0D47A1) // Color del borde de las celdas
+    val alphaAnim = rememberInfiniteTransition().animateFloat(
         initialValue = 1f,
         targetValue = 0.3f,
         animationSpec = infiniteRepeatable(
             animation = tween(500, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
-        ), label = "alpha"
+        )
     )
 
+    // Diseño visual de la celda
     Box(
-        modifier = Modifier
-            .padding(4.dp)
-            .size(60.dp)
+        modifier = modifier
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
-                .background(bordeColor, shape = CircleShape)
+                .fillMaxSize()
+                .background(bordeColor, CircleShape)
+                .padding(6.dp)
         )
-
         if (ficha != 0) {
             Box(
                 modifier = Modifier
                     .offset(y = offsetY)
-                    .size(40.dp)
+                    .fillMaxSize()
                     .background(
-                        color = fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
-                        shape = CircleShape
+                        fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
+                        CircleShape
                     )
+                    .padding(8.dp)
             )
         }
     }
 }
 
+// Función que verifica si hay un ganador en el tablero
 fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int>> {
     val filas = tablero.size
     val columnas = tablero[0].size
 
-    // Horizontal
+    // Verificación horizontal
     for (fila in 0 until filas) {
         for (col in 0 until columnas - 3) {
             if ((0..3).all { offset -> tablero[fila][col + offset] == jugador }) {
@@ -245,7 +272,7 @@ fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int
         }
     }
 
-    // Vertical
+    // Verificación vertical
     for (col in 0 until columnas) {
         for (fila in 0 until filas - 3) {
             if ((0..3).all { offset -> tablero[fila + offset][col] == jugador }) {
@@ -254,7 +281,7 @@ fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int
         }
     }
 
-    // Diagonal ↘
+    // Verificación diagonal ↘
     for (fila in 0 until filas - 3) {
         for (col in 0 until columnas - 3) {
             if ((0..3).all { offset -> tablero[fila + offset][col + offset] == jugador }) {
@@ -263,7 +290,7 @@ fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int
         }
     }
 
-    // Diagonal ↙
+    // Verificación diagonal ↙
     for (fila in 3 until filas) {
         for (col in 0 until columnas - 3) {
             if ((0..3).all { offset -> tablero[fila - offset][col + offset] == jugador }) {
@@ -272,5 +299,5 @@ fun verificarGanador(tablero: List<List<Int>>, jugador: Int): List<Pair<Int, Int
         }
     }
 
-    return emptyList()
+    return emptyList() // Si no hay ganador, devuelve lista vacía
 }
