@@ -1,6 +1,5 @@
 package com.example.conecta4
 
-import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.example.conecta4.ui.theme.Conecta4Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,8 +40,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PantallaPrincipal() {
-    val tablero = remember { List(6) { mutableStateListOf(*Array(7) { 0 }) } }
-    val posicionesAnimadas = remember { List(6) { MutableList(7) { Animatable(-300f) } } }
+    val tablero = remember {
+        List(6) { mutableStateListOf(*Array(7) { 0 }) }
+    }
+    val posicionesAnimadas = remember {
+        List(6) { MutableList(7) { Animatable(-300f) } }
+    }
 
     var turnoJugador by remember { mutableStateOf(1) }
     var mensaje by remember { mutableStateOf("Tu turno 🔴") }
@@ -81,7 +85,7 @@ fun PantallaPrincipal() {
                 if (ganadoras.isNotEmpty()) {
                     celdasGanadoras = ganadoras
                     val emoji = if (jugador == 1) "🔴" else "🟡"
-                    mensaje = "🎉 ¡${if (jugador == 1) "El humano" else "La máquina"} Gana! $emoji"
+                    mensaje = "🎉 ¡${if (jugador == 1) "Tú" else "La máquina"} gana! $emoji"
                     juegoFinalizado = true
                 } else if (tablero.all { fila -> fila.all { it != 0 } }) {
                     mensaje = "Empate 🤝"
@@ -116,11 +120,7 @@ fun PantallaPrincipal() {
         Text(text = mensaje, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(32.dp))
 
-        Tablero(
-            tablero,
-            posicionesAnimadas,
-            celdasGanadoras
-        ) { col ->
+        Tablero(tablero, posicionesAnimadas, celdasGanadoras) { col ->
             if (!juegoFinalizado && turnoJugador == 1 && puedeJugar) {
                 jugarTurno(col, 1)
             }
@@ -155,32 +155,23 @@ fun Tablero(
     celdasGanadoras: List<Pair<Int, Int>>,
     onColClick: (Int) -> Unit
 ) {
-    val outerPad = 16.dp          // margen externo más amplio   ← ajusta aquí
-    val innerPad = 6.dp           // espacio entre celdas/filas  ← y aquí
-
     Column(
         modifier = Modifier
-            .padding(horizontal = outerPad, vertical = outerPad / 2) // simétrico
             .background(Color(0xFF1976D2))
+            .padding(8.dp)
             .shadow(4.dp)
-            .padding(outerPad)    // colchón interior del marco azul
     ) {
-        tablero.forEachIndexed { filaIdx, fila ->
+        for ((filaIndex, fila) in tablero.withIndex()) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = innerPad),
-                horizontalArrangement = Arrangement.spacedBy(innerPad)
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                fila.forEachIndexed { colIdx, celda ->
+                for ((colIndex, celda) in fila.withIndex()) {
                     Celda(
                         ficha = celda,
-                        offsetY = posicionesAnimadas[filaIdx][colIdx].value.dp,
-                        parpadea = celdasGanadoras.contains(filaIdx to colIdx),
-                        onClick = { onColClick(colIdx) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
+                        offsetY = posicionesAnimadas[filaIndex][colIndex].value.dp,
+                        parpadea = celdasGanadoras.contains(filaIndex to colIndex),
+                        onClick = { onColClick(colIndex) }
                     )
                 }
             }
@@ -188,15 +179,8 @@ fun Tablero(
     }
 }
 
-
 @Composable
-fun Celda(
-    ficha: Int,
-    offsetY: Dp,
-    parpadea: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier      // ← mod
-) {
+fun Celda(ficha: Int, offsetY: Dp, parpadea: Boolean, onClick: () -> Unit) {
     val fichaColor = when (ficha) {
         1 -> Color.Red
         2 -> Color.Yellow
@@ -204,36 +188,37 @@ fun Celda(
     }
 
     val bordeColor = Color(0xFF0D47A1)
-    val alphaAnim = rememberInfiniteTransition().animateFloat(
+    val alphaAnim = rememberInfiniteTransition(label = "parpadeo").animateFloat(
         initialValue = 1f,
         targetValue = 0.3f,
         animationSpec = infiniteRepeatable(
             animation = tween(500, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
-        )
+        ), label = "alpha"
     )
 
     Box(
-        modifier = modifier
-            .clickable { onClick() },   // uso el modifier recibido ← mod
+        modifier = Modifier
+            .padding(4.dp)
+            .size(60.dp)
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()           // ocupa todo el cuadrado ← mod
-                .background(bordeColor, CircleShape)
-                .padding(6.dp)           // margen interior para el borde
+                .size(50.dp)
+                .background(bordeColor, shape = CircleShape)
         )
+
         if (ficha != 0) {
             Box(
                 modifier = Modifier
                     .offset(y = offsetY)
-                    .fillMaxSize()       // ficha llena el centro
+                    .size(40.dp)
                     .background(
-                        fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
-                        CircleShape
+                        color = fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
+                        shape = CircleShape
                     )
-                    .padding(8.dp)       // separo la ficha del borde
             )
         }
     }
