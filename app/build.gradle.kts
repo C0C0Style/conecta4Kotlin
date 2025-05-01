@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+
 android {
     namespace = "com.example.conecta4"
     compileSdk = 35
@@ -40,20 +41,25 @@ android {
 }
 
 dependencies {
+    // Jetpack Compose UI y Material3
+    implementation("androidx.compose.material3:material3:1.3.2") // ¡Esta es la última versión estable!
+    implementation("androidx.compose.ui:ui:1.8.0")
+    implementation("androidx.compose.foundation:foundation:1.8.0")
+    implementation("androidx.compose.runtime:runtime:1.8.0")
 
+    // Kotlin y otras dependencias esenciales
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+
+    // Test dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Debugging y toolings
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
