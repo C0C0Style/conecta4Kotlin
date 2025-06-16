@@ -19,6 +19,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.conecta4.ui.theme.Conecta4Theme
+import com.example.conecta4.view.AppNavigation
+import com.example.conecta4.view.Celda
+import com.example.conecta4.view.ViewInicioSesion
+import com.example.conecta4.view.ViewRegistro
+import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,7 +37,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PantallaPrincipal() // Pantalla principal del juego - Main game screen
+                   // PantallaPrincipal() // Pantalla principal del juego - Main game screen
+                    AppNavigation()
                 }
             }
         }
@@ -207,56 +213,7 @@ fun Tablero(
 }
 
 // Componente que representa una celda del tablero - Component that represents a board cell
-@Composable
-fun Celda(
-    ficha: Int,
-    offsetY: Dp,
-    parpadea: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val fichaColor = when (ficha) {
-        1 -> Color.Red // Ficha del jugador 1 (roja) - Player 1's piece (red)
-        2 -> Color.Yellow // Ficha del jugador 2 (amarilla) - Player 2's piece (yellow)
-        else -> Color.Transparent // Sin ficha (vacío) - No piece (empty)
-    }
 
-    val bordeColor = Color(0xFF0D47A1) // Color del borde de las celdas - Color of the cell borders
-    val alphaAnim = rememberInfiniteTransition().animateFloat(
-        initialValue = 1f,
-        targetValue = 0.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    // Diseño visual de la celda - Visual design of the cell
-    Box(
-        modifier = modifier
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(bordeColor, CircleShape)
-                .padding(6.dp)
-        )
-        if (ficha != 0) {
-            Box(
-                modifier = Modifier
-                    .offset(y = offsetY)
-                    .fillMaxSize()
-                    .background(
-                        fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
-                        CircleShape
-                    )
-                    .padding(8.dp)
-            )
-        }
-    }
-}
 
 // Función que verifica si hay un ganador en el tablero - Function that checks if there's a winner on the board
 fun verificarGanador(tablero: List<MutableList<Int>>, jugador: Int): List<Pair<Int, Int>> {
