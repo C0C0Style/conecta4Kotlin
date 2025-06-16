@@ -3,6 +3,7 @@
 
     <!-- Configuración general de la aplicación / General application configuration -->
     <application
+        android:name="com.example.conecta4.Conecta4"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
