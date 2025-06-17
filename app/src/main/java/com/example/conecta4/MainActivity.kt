@@ -1,39 +1,21 @@
 package com.example.conecta4
 
-
-
 import androidx.compose.ui.platform.LocalConfiguration
-
 import android.os.Bundle
-
 import androidx.activity.ComponentActivity
-
 import androidx.activity.compose.setContent
-
 import androidx.compose.animation.core.*
-
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.clickable
-
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.foundation.shape.CircleShape
-
 import androidx.compose.material3.*
-
 import androidx.compose.runtime.*
-
 import androidx.compose.ui.Alignment
-
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.draw.shadow
-
 import androidx.compose.ui.graphics.Color
-
 import androidx.compose.ui.unit.Dp
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.conecta4.ui.theme.Conecta4Theme
@@ -43,145 +25,76 @@ import com.example.conecta4.view.ViewRegistro
 import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-
-
 // Actividad principal que maneja la interfaz de usuario - Main activity that handles the user interface
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
-
         setContent {
-
             Conecta4Theme {
-
                 Surface(
-
                     modifier = Modifier.fillMaxSize(),
-
                     color = MaterialTheme.colorScheme.background
-
                 ) {
-
                     // PantallaPrincipal() // Pantalla principal del juego - Main game screen
-
                     AppNavigation()
-
                 }
-
             }
-
         }
-
     }
-
 }
-
-
 
 @Composable
-
 fun Celda(
-
     ficha: Int,
-
     offsetY: Dp,
-
     parpadea: Boolean,
-
     onClick: () -> Unit,
-
     modifier: Modifier = Modifier
-
 ) {
-
     val fichaColor = when (ficha) {
-
         1 -> Color.Red // Ficha del jugador 1 (roja) - Player 1's piece (red)
-
         2 -> Color.Yellow // Ficha del jugador 2 (amarilla) - Player 2's piece (yellow)
-
         else -> Color.Transparent // Sin ficha (vacío) - No piece (empty)
-
     }
-
-
 
     val bordeColor = Color(0xFF0D47A1) // Color del borde de las celdas - Color of the cell borders
-
     val alphaAnim = rememberInfiniteTransition().animateFloat(
-
         initialValue = 1f,
-
         targetValue = 0.3f,
-
         animationSpec = infiniteRepeatable(
-
             animation = tween(500, easing = LinearEasing),
-
             repeatMode = RepeatMode.Reverse
-
         )
-
     )
-
-
-
 // Diseño visual de la celda - Visual design of the cell
-
     Box(
-
         modifier = modifier
-
             .clickable { onClick() },
-
         contentAlignment = Alignment.Center
-
     ) {
-
         Box(
-
             modifier = Modifier
-
                 .fillMaxSize()
-
                 .background(bordeColor, CircleShape)
-
                 .padding(6.dp)
-
         )
-
         if (ficha != 0) {
-
             Box(
-
                 modifier = Modifier
-
                     .offset(y = offsetY)
-
                     .fillMaxSize()
-
                     .background(
-
                         fichaColor.copy(alpha = if (parpadea) alphaAnim.value else 1f),
-
                         CircleShape
-
                     )
-
                     .padding(8.dp)
-
             )
-
         }
-
     }
-
 }
 
+/*
 // Pantalla principal que maneja el estado del juego - Main screen that manages the game state
 
 @Composable
@@ -563,3 +476,4 @@ fun verificarGanador(tablero: List<MutableList<Int>>, jugador: Int): List<Pair<I
     return emptyList() // Si no hay ganador - If no winner
 
 }
+*/

@@ -51,6 +51,7 @@ dependencies {
 
 
     // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0") // Or the latest version
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0") // Or the latest stable version
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // Or the latest stable version
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0") // For compose-specific ViewModel integration

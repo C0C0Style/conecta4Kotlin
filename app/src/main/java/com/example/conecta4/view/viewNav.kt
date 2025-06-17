@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.conecta4.PantallaPrincipal
 import com.example.conecta4.util.navRutas
 import com.example.conecta4.viewModel.UsuarioViewModel
 
@@ -54,7 +53,7 @@ fun AppNavigation() {
             ViewHome(navController = navController)
         }
         composable(navRutas.jueMaq){
-            PantallaPrincipal()
+            GameScreen(navController = navController )
         }
 
 

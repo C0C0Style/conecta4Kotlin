@@ -16,12 +16,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.conecta4.util.navRutas
 import com.example.conecta4.viewmodel.GameViewModel
+import kotlinx.coroutines.launch
 
-// Pantalla principal que maneja el estado del juego
 @Composable
-fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
-    // Observa los estados del ViewModel
+fun GameScreen(navController: NavController,gameViewModel: GameViewModel = viewModel()) {
     val tablero by gameViewModel.tablero.collectAsState()
     val posicionesAnimadas by gameViewModel.posicionesAnimadas.collectAsState()
     val mensajeJuego by gameViewModel.mensajeJuego.collectAsState()
@@ -30,13 +31,29 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
     val jugadorActual by gameViewModel.jugadorActual.collectAsState()
     val puedeJugar by gameViewModel.puedeJugar.collectAsState()
 
+    val fichaCaidaEvent by gameViewModel.fichaCaidaEvent.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(fichaCaidaEvent) {
+        fichaCaidaEvent?.let { (fila, col) ->
+            val animatable = posicionesAnimadas[fila][col]
+            animatable.snapTo(-300f)
+            animatable.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
+            )
+            gameViewModel.consumirFichaCaidaEvent()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Center, // Esto centrará el contenido verticalmente
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Contenido de la pantalla (títulos, tablero)
         Text("¡\uD83D\uDC7E Bienvenido \uD83D\uDC7E! ", style = MaterialTheme.typography.headlineSmall.copy(fontSize = 32.sp))
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = mensajeJuego, fontSize = 18.sp)
@@ -52,17 +69,34 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp)) // Espacio antes de los botones
 
-        if (juegoTerminado) {
-            Button(onClick = { gameViewModel.reiniciarJuego() }) {
-                Text("Reiniciar Juego")
+        // Botón Reiniciar Juego
+        Button(
+            onClick = { gameViewModel.reiniciarJuego() },
+            // Puedes deshabilitarlo si el juego no ha terminado y no hay necesidad de reiniciar
+            enabled = juegoTerminado // O siempre true si quieres que siempre se pueda reiniciar
+        ) {
+            Text("Reiniciar Juego")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp)) // Espacio entre los botones
+
+        // Botón Volver al inicio
+        Button(onClick = {
+            navController.navigate(navRutas.inicio) {
+                // Estas líneas son opcionales pero útiles para la navegación
+                popUpTo(navRutas.inicio) { inclusive = true }
+                launchSingleTop = true
             }
+            gameViewModel.reiniciarJuego() // Es buena práctica reiniciar el juego al salir
+        }) {
+            Text("Volver al inicio")
         }
     }
 }
 
-// Componente que representa el tablero de juego
+// Las funciones Board y Cell permanecen exactamente iguales
 @Composable
 fun Board(
     tablero: List<MutableList<Int>>,

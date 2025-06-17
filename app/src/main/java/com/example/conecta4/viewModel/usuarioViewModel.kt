@@ -1,5 +1,3 @@
-// Archivo: com.example.conecta4.viewModel/usuarioViewModel.kt
-
 package com.example.conecta4.viewModel
 
 import androidx.lifecycle.ViewModel
