@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.conecta4.PantallaPrincipal
 import com.example.conecta4.util.navRutas
 import com.example.conecta4.viewModel.UsuarioViewModel
 
@@ -36,9 +37,7 @@ fun AppNavigation() {
                 onLoginSuccess = {
                     // Navegar a la pantalla principal (HOME) después de un inicio de sesión exitoso
                     // Usar popUpTo para limpiar la pila de retroceso y que no puedas volver a la pantalla de login
-                    navController.navigate(navRutas.inicio) {
-
-                    }
+                    navController.navigate(navRutas.inicio)
                 }
 
             )
@@ -51,5 +50,13 @@ fun AppNavigation() {
 
             )
         }
+        composable(navRutas.inicio){
+            ViewHome(navController = navController)
+        }
+        composable(navRutas.jueMaq){
+            PantallaPrincipal()
+        }
+
+
     }
 }

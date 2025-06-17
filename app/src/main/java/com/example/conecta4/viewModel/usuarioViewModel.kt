@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 sealed class AuthState {
     object Idle : AuthState() // Estado inicial o cuando no hay operación en curso
     object Loading : AuthState() // Operación en progreso
-    object Success : AuthState() // Operación exitosa
+    object Success : AuthState() // Operación exitosa (registro o login)
     data class Error(val message: String) : AuthState() // Operación fallida con mensaje de error
 }
 
@@ -57,12 +57,41 @@ class UsuarioViewModel(private val auth: FirebaseAuth = FirebaseAuth.getInstance
         }
     }
 
+    /**
+     * Función para iniciar sesión con un correo electrónico y contraseña.
+     */
+    fun loginUser(email: String, password: String) {
+        // Validación básica
+        if (email.isBlank() || password.isBlank()) {
+            _authState.value = AuthState.Error("Correo y contraseña no pueden estar vacíos.")
+            return
+        }
+
+        _authState.value = AuthState.Loading // Cambia el estado a cargando
+
+        viewModelScope.launch { // Ejecuta la operación en un ámbito de corrutina del ViewModel
+            try {
+                // Realiza la llamada a Firebase para iniciar sesión
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            _authState.value = AuthState.Success // Si es exitoso, actualiza el estado a Success
+                        } else {
+                            // Si falla, actualiza el estado a Error con el mensaje
+                            val errorMessage = task.exception?.message ?: "Credenciales inválidas o error desconocido"
+                            _authState.value = AuthState.Error(errorMessage)
+                        }
+                    }
+            } catch (e: Exception) {
+                // Captura cualquier excepción inesperada
+                _authState.value = AuthState.Error("Error inesperado al iniciar sesión: ${e.message}")
+            }
+        }
+    }
+
     // Método para resetear el estado de autenticación. Muy importante para evitar
     // que LaunchedEffect se dispare múltiples veces al recomponerse la vista
     fun resetAuthState() {
         _authState.value = AuthState.Idle
     }
-
-    // *** No necesitas aquí la función loginUser si solo te enfocas en el registro por ahora ***
-    // Si la tienes, déjala, pero el enfoque es en registerUser.
 }
