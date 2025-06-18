@@ -1,5 +1,4 @@
-// app/src/main/java/com/example/conecta4/viewmodel/GameViewModel.kt
-package com.example.conecta4.viewmodel
+package com.example.conecta4.viewModel
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D

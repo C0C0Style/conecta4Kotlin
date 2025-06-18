@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.conecta4.util.navRutas
-import com.example.conecta4.viewmodel.GameViewModel
+import com.example.conecta4.viewModel.GameViewModel
+
 import kotlinx.coroutines.launch
 
 @Composable
