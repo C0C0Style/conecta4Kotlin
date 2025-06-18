@@ -6,5 +6,6 @@ object navRutas {
     const val registro = "registro"
     const val iniSes = "iniSes"
     const val jueMaq = "jueMaq"
+    const val usersList = "usersList"
     // ... otras rutas
 }

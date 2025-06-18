@@ -20,14 +20,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel // Importar viewModel()
 import com.example.conecta4.viewModel.AuthState // Importar AuthState
-import com.example.conecta4.viewModel.UsuarioViewModel // Importar UsuarioViewModel
+import com.example.conecta4.viewModel.UsuarioViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewInicioSesion(
     onNavigateToRegister: () -> Unit,
     onLoginSuccess: () -> Unit,
-    usuarioViewModel: UsuarioViewModel = viewModel() // Inyectar el ViewModel
+    usuarioViewModel: UsuarioViewModel
 ) {
     var email by remember { mutableStateOf("") } // Cambiado a 'email' para consistencia con Firebase
     var password by remember { mutableStateOf("") }
@@ -135,10 +135,4 @@ fun ViewInicioSesion(
             Text("¿No tienes cuenta? Regístrate aquí")
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewViewInicioSesion() {
-    ViewInicioSesion(onNavigateToRegister = {}, onLoginSuccess = {})
 }

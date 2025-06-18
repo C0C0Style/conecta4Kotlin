@@ -1,5 +1,4 @@
-// app/src/main/java/com/example/conecta4/viewmodel/GameViewModel.kt
-package com.example.conecta4.viewmodel
+package com.example.conecta4.viewModel
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
@@ -14,15 +13,20 @@ import kotlinx.coroutines.launch
 
 class GameViewModel : ViewModel() {
 
-    // Estado del tablero de juego: 0 para vacío, 1 para Jugador 1 (Rojo), 2 para Jugador 2 (Amarillo/IA)
+
+    fun consumirFichaCaidaEvent() {
+        _fichaCaidaEvent.value = null
+    }
+
     private val _tablero = MutableStateFlow(List(6) { mutableStateListOf(*Array(7) { 0 }) })
     val tablero: StateFlow<List<MutableList<Int>>> = _tablero.asStateFlow()
 
-    // Estado de la animación para las fichas que caen
+    // _posicionesAnimadas se mantiene aquí para que el ViewModel controle el estado de los Animatable
+    // pero la *ejecución* de la animación se moverá a la Vista.
     private val _posicionesAnimadas = MutableStateFlow(List(6) { MutableList(7) { Animatable(-300f) } })
     val posicionesAnimadas: StateFlow<List<MutableList<Animatable<Float, AnimationVector1D>>>> = _posicionesAnimadas.asStateFlow()
 
-    private val _jugadorActual = MutableStateFlow(1) // 1 para Jugador 1, 2 para IA
+    private val _jugadorActual = MutableStateFlow(1)
     val jugadorActual: StateFlow<Int> = _jugadorActual.asStateFlow()
 
     private val _mensajeJuego = MutableStateFlow("Tu turno 🔴")
@@ -37,19 +41,26 @@ class GameViewModel : ViewModel() {
     private val _puedeJugar = MutableStateFlow(true)
     val puedeJugar: StateFlow<Boolean> = _puedeJugar.asStateFlow()
 
+    // **NUEVO:** Un evento para notificar a la UI sobre una ficha caída y dónde.
+    // Usamos un StateFlow y lo ponemos a 'null' después de que el evento se consume
+    // para que no se dispare repetidamente.
+    private val _fichaCaidaEvent = MutableStateFlow<Pair<Int, Int>?>(null)
+    val fichaCaidaEvent: StateFlow<Pair<Int, Int>?> = _fichaCaidaEvent.asStateFlow()
+
     init {
-        // Inicializa el juego al crear el ViewModel
         reiniciarJuego()
     }
 
     fun reiniciarJuego() {
         _tablero.value = List(6) { mutableStateListOf(*Array(7) { 0 }) }
+        // Se reinicializan los Animatable aquí.
         _posicionesAnimadas.value = List(6) { MutableList(7) { Animatable(-300f) } }
         _jugadorActual.value = 1
         _mensajeJuego.value = "Tu turno 🔴"
         _juegoTerminado.value = false
         _celdasGanadoras.value = emptyList()
         _puedeJugar.value = true
+        _fichaCaidaEvent.value = null // Resetea el evento
     }
 
     fun jugarTurno(col: Int, jugador: Int) {
@@ -57,14 +68,16 @@ class GameViewModel : ViewModel() {
         viewModelScope.launch {
             val filaDisponible = buscarFilaDisponible(_tablero.value, col)
             if (filaDisponible != -1) {
+                // Actualiza el estado del tablero
                 _tablero.value[filaDisponible][col] = jugador
 
-                // Animar la ficha
-                _posicionesAnimadas.value[filaDisponible][col].snapTo(-300f)
-                _posicionesAnimadas.value[filaDisponible][col].animateTo(
-                    targetValue = 0f,
-                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 500, easing = androidx.compose.animation.core.LinearOutSlowInEasing)
-                )
+                // **CAMBIO CLAVE AQUÍ:**
+                // En lugar de llamar a animateTo, emitimos un evento para que la UI lo maneje.
+                _fichaCaidaEvent.value = Pair(filaDisponible, col)
+
+                // Pequeño retraso para que la animación en la UI tenga tiempo de comenzar.
+                // Ajusta este delay para que coincida con la duración de tu animación.
+                delay(600) // 500ms de animación + un buffer
 
                 val ganadoras = verificarGanador(_tablero.value, jugador)
                 if (ganadoras.isNotEmpty()) {
@@ -80,7 +93,7 @@ class GameViewModel : ViewModel() {
                     _mensajeJuego.value = if (_jugadorActual.value == 1) "Tu turno 🔴" else "Turno de la máquina 🟡"
 
                     if (_jugadorActual.value == 2 && !_juegoTerminado.value) {
-                        delay(800)
+                        delay(800) // Espera un poco antes de que la IA juegue
                         val colMaquina = elegirJugadaMaquina(_tablero.value)
                         jugarTurno(colMaquina, 2)
                     } else if (_jugadorActual.value == 1 && !_juegoTerminado.value) {
@@ -93,7 +106,7 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    // --- Funciones auxiliares de la lógica del juego (Movidas desde PantallaPrincipal) ---
+    // --- Funciones auxiliares de la lógica del juego ---
 
     private fun buscarFilaDisponible(tablero: List<MutableList<Int>>, col: Int): Int {
         for (fila in tablero.indices.reversed()) {
@@ -108,20 +121,19 @@ class GameViewModel : ViewModel() {
     }
 
     private fun verificarGanador(tablero: List<MutableList<Int>>, jugador: Int): List<Pair<Int, Int>> {
-        // Chequeos horizontal, vertical y diagonal para un ganador de Conecta 4
         for (row in 0 until 6) {
             for (col in 0 until 7) {
                 if (col + 3 < 7 && (0 until 4).all { i -> tablero[row][col + i] == jugador }) {
-                    return (0 until 4).map { i -> row to col + i } // Victoria horizontal
+                    return (0 until 4).map { i -> row to col + i }
                 }
                 if (row + 3 < 6 && (0 until 4).all { i -> tablero[row + i][col] == jugador }) {
-                    return (0 until 4).map { i -> row + i to col } // Victoria vertical
+                    return (0 until 4).map { i -> row + i to col }
                 }
                 if (row + 3 < 6 && col + 3 < 7 && (0 until 4).all { i -> tablero[row + i][col + i] == jugador }) {
-                    return (0 until 4).map { i -> row + i to col + i } // Victoria diagonal (descendente)
+                    return (0 until 4).map { i -> row + i to col + i }
                 }
                 if (row - 3 >= 0 && col + 3 < 7 && (0 until 4).all { i -> tablero[row - i][col + i] == jugador }) {
-                    return (0 until 4).map { i -> row - i to col + i } // Victoria diagonal (ascendente)
+                    return (0 until 4).map { i -> row - i to col + i }
                 }
             }
         }

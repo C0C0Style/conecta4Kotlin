@@ -5,6 +5,7 @@ plugins {
     // Add the dependency for the Google services Gradle plugin
     id("com.google.gms.google-services")
 
+
 }
 
 
@@ -49,8 +50,11 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.0") // O la versión más reciente
 
 
+    // Para LiveData en Compose
+    implementation ("androidx.compose.runtime:runtime-livedata:1.6.8")
 
     // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0") // Or the latest version
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0") // Or the latest stable version
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // Or the latest stable version
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0") // For compose-specific ViewModel integration
@@ -61,6 +65,7 @@ dependencies {
 
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation("com.google.firebase:firebase-database-ktx")
 
 
     // TODO: Add the dependencies for Firebase products you want to use
