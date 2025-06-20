@@ -5,12 +5,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -41,7 +47,27 @@ fun UsersListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Usuarios Conectados") })
+            TopAppBar(
+                title = { Text("Usuarios Conectados") },
+                actions = {
+                    IconButton(onClick = {
+                        // Acción al tocar la campana
+                    }) {
+                        BadgedBox(
+                            badge = {
+                                // Puedes mostrar un número o solo el punto rojo
+                                Badge { Text("1") } // Para número
+                                // Badge() // Para solo un punto rojo
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notificaciones"
+                            )
+                        }
+                    }
+                }
+            )
         },
         content = { paddingValues ->
             Column(
