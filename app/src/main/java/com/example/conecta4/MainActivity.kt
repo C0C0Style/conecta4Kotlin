@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+/*
 @Composable
 fun Celda(
     ficha: Int,
