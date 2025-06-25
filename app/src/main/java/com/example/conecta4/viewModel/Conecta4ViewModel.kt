@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class GameViewModel : ViewModel() {
+class GameViewModelLocal : ViewModel() {
 
 
     fun consumirFichaCaidaEvent() {

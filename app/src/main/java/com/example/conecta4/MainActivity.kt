@@ -1,5 +1,6 @@
 package com.example.conecta4
 
+import AppNavigation
 import androidx.compose.ui.platform.LocalConfiguration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,7 +20,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.conecta4.ui.theme.Conecta4Theme
-import com.example.conecta4.view.AppNavigation
 import com.example.conecta4.view.ViewInicioSesion
 import com.example.conecta4.view.ViewRegistro
 import com.google.firebase.FirebaseApp

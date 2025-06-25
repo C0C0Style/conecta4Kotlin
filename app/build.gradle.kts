@@ -46,6 +46,9 @@ android {
 
 dependencies {
 
+    // Firebase Firestore
+    implementation ("com.google.firebase:firebase-firestore-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.0") // O la versión más reciente
 

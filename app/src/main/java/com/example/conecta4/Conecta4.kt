@@ -1,18 +1,14 @@
-package com.example.conecta4 // Asegúrate de que este sea el paquete correcto
+package com.example.conecta4
 
 import android.app.Application
-import com.google.firebase.FirebaseApp
-import android.util.Log // Importa Log para depuración
+import android.util.Log // Importar Log para mensajes de depuración
+import com.google.firebase.FirebaseApp // Importar FirebaseApp
 
 class Conecta4 : Application() {
     override fun onCreate() {
         super.onCreate()
-        Log.d("FirebaseInit", "Intentando inicializar Firebase en Conecta4.onCreate()") // Log para depuración
-        try {
-            FirebaseApp.initializeApp(this)
-            Log.d("FirebaseInit", "Firebase inicializado con ÉXITO.")
-        } catch (e: Exception) {
-            Log.e("FirebaseInit", "Error al inicializar Firebase: ${e.message}", e)
-        }
+        // Inicializa Firebase aquí
+        FirebaseApp.initializeApp(this)
+        Log.d("Conecta4App", "Firebase se ha inicializado correctamente.")
     }
 }

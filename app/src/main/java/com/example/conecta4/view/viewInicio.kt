@@ -18,36 +18,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel // Importa esto
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.conecta4.util.navRutas
-import com.example.conecta4.viewModel.UsuarioViewModel // ¡IMPORTANTE! Importa tu UsuarioViewModel
+import com.example.conecta4.viewModel.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-// Puedes mantener HomeViewModel si todavía lo usas para el email,
-// pero su función signOut() ya no se usará para cerrar sesión en la DB.
+// Puedes mantener HomeViewModel para el email o mover esa lógica a UsuarioViewModel
 class HomeViewModel(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) : ViewModel() {
     private val _currentUserEmail = MutableStateFlow<String?>(auth.currentUser?.email)
     val currentUserEmail: StateFlow<String?> = _currentUserEmail.asStateFlow()
-
-    // La función signOut() aquí ya no es necesaria si el cierre de sesión completo
-    // se maneja en UsuarioViewModel. Si la mantienes, asegúrate de que no se llame
-    // en el botón de cerrar sesión.
-    // fun signOut() {
-    //     auth.signOut()
-    // }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewHome(
     navController: NavController,
-    homeViewModel: HomeViewModel = viewModel(), // Sigue usando HomeViewModel si lo necesitas para el email
-    usuarioViewModel: UsuarioViewModel = viewModel() // <--- ¡Añade esto para inyectar UsuarioViewModel!
+    homeViewModel: HomeViewModel = viewModel(),
+    usuarioViewModel: UsuarioViewModel = viewModel() // Asegúrate de que este ViewModel esté disponible
 ) {
     val currentUserEmail by homeViewModel.currentUserEmail.collectAsState()
 
@@ -69,11 +61,19 @@ fun ViewHome(
                     style = MaterialTheme.typography.headlineSmall
                 )
 
+                // --- Nuevos botones para Salas ---
                 Button(onClick = {
-                    navController.navigate(navRutas.usersList)
+                    navController.navigate(navRutas.createRoom)
                 }) {
-                    Text("Jugar con un Amigo")
+                    Text("Crear Sala")
                 }
+
+                Button(onClick = {
+                    navController.navigate(navRutas.joinRoom)
+                }) {
+                    Text("Unirse a Sala")
+                }
+                // --- Fin Nuevos botones ---
 
                 Button(onClick = {
                     navController.navigate(navRutas.jueMaq)
@@ -82,10 +82,7 @@ fun ViewHome(
                 }
 
                 Button(onClick = {
-                    // ¡¡¡CAMBIO CRÍTICO AQUÍ!!!
-                    // Llama a la función que maneja el estado de presencia Y el logout de Firebase Auth
-                    usuarioViewModel.setStatusOfflineAndLogout()
-
+                    usuarioViewModel.logoutUser() // Llama a la función de cerrar sesión
                     navController.navigate(navRutas.iniSes) {
                         popUpTo(navController.graph.startDestinationId) {
                             inclusive = true
@@ -97,10 +94,4 @@ fun ViewHome(
             }
         }
     )
-}
-
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-fun PreviewViewHome() {
-    ViewHome(navController = rememberNavController())
 }

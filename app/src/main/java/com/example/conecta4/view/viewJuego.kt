@@ -1,4 +1,3 @@
-// app/src/main/java/com/example/conecta4/view/GameScreen.kt
 package com.example.conecta4.view
 
 import androidx.compose.animation.core.*
@@ -18,12 +17,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.conecta4.util.navRutas
-import com.example.conecta4.viewModel.GameViewModel
+import com.example.conecta4.viewModel.GameViewModelLocal
 
 import kotlinx.coroutines.launch
 
 @Composable
-fun GameScreen(navController: NavController,gameViewModel: GameViewModel = viewModel()) {
+fun GameScreen(navController: NavController,gameViewModel: GameViewModelLocal = viewModel()) {
     val tablero by gameViewModel.tablero.collectAsState()
     val posicionesAnimadas by gameViewModel.posicionesAnimadas.collectAsState()
     val mensajeJuego by gameViewModel.mensajeJuego.collectAsState()
