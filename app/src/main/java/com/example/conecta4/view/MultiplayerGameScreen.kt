@@ -21,6 +21,9 @@ import com.example.conecta4.viewModel.GameState
 import com.example.conecta4.viewModel.GameViewModel
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.text.font.FontWeight // NUEVO
+import androidx.compose.ui.text.input.TextFieldValue // NUEVO
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +35,10 @@ fun MultiplayerGameScreen(
     val context = LocalContext.current
     val gameState by gameViewModel.gameState.collectAsState()
     val currentUserId = gameViewModel.currentUserId
+    val timeLeft by gameViewModel.timeLeft.collectAsState() // NUEVO: Para el temporizador de la UI
+
+    // Estado local para la respuesta del jugador
+    var playerAnswer by remember { mutableStateOf(TextFieldValue("")) } // NUEVO
 
     LaunchedEffect(roomId) {
         gameViewModel.startGameObservation(roomId)
@@ -47,6 +54,9 @@ fun MultiplayerGameScreen(
                 val gameOverState = gameState as GameState.GameOver
                 Toast.makeText(context, gameOverState.message, Toast.LENGTH_LONG).show()
             }
+            is GameState.AwaitingTranslation -> { // NUEVO: Limpiar la respuesta al mostrar una nueva pregunta
+                playerAnswer = TextFieldValue("")
+            }
             else -> { /* No hacer nada para Loading, Active, Idle en este LaunchedEffect */ }
         }
     }
@@ -57,16 +67,15 @@ fun MultiplayerGameScreen(
                 title = { Text("Conecta 4 Multijugador") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        if (gameState is GameState.Active) {
-                            val room = (gameState as GameState.Active).room
-                            if (room.hostId == currentUserId) {
-                                gameViewModel.deleteRoom(roomId)
-                            }
-                        } else if (gameState is GameState.GameOver) {
-                            val room = (gameState as GameState.GameOver).room
-                            if (room.hostId == currentUserId) {
-                                gameViewModel.deleteRoom(roomId)
-                            }
+                        // Lógica para salir y eliminar la sala si es el host
+                        val shouldDeleteRoom = when (gameState) {
+                            is GameState.Active -> (gameState as GameState.Active).room.hostId == currentUserId
+                            is GameState.GameOver -> (gameState as GameState.GameOver).room.hostId == currentUserId
+                            is GameState.AwaitingTranslation -> (gameState as GameState.AwaitingTranslation).room.hostId == currentUserId // NUEVO
+                            else -> false
+                        }
+                        if (shouldDeleteRoom) {
+                            gameViewModel.deleteRoom(roomId)
                         }
                         gameViewModel.resetGameState()
                         navController.navigate(navRutas.inicio) {
@@ -105,16 +114,17 @@ fun MultiplayerGameScreen(
                 }
                 is GameState.Active -> {
                     val room = (gameState as GameState.Active).room
-                    val board = (gameState as GameState.Active).board2D // <-- Acceder al board2D
+                    val board = (gameState as GameState.Active).board2D
                     val currentPlayerIsMe = room.currentPlayerId == currentUserId
 
                     Text(
-                        text = if (currentPlayerIsMe) "¡Es tu turno!" else "Turno de ${if (room.currentPlayerId == room.hostId) room.hostEmail?.substringBefore('@') else room.guestEmail?.substringBefore('@')}",
+                        text = if (currentPlayerIsMe) "¡Es tu turno! Haz tu movimiento." else "Turno de ${if (room.currentPlayerId == room.hostId) room.hostEmail?.substringBefore('@') else room.guestEmail?.substringBefore('@')}",
                         style = MaterialTheme.typography.headlineSmall,
                         color = if (currentPlayerIsMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
+                    // El tablero es clickeable solo si es mi turno
                     Board(board = board) { column ->
                         if (currentPlayerIsMe) {
                             gameViewModel.makeMove(roomId, column)
@@ -123,10 +133,72 @@ fun MultiplayerGameScreen(
                         }
                     }
                 }
+                is GameState.AwaitingTranslation -> { // NUEVO ESTADO: Esperando traducción
+                    val translationState = gameState as GameState.AwaitingTranslation
+                    val room = translationState.room
+                    val board = translationState.board2D
+                    val currentPlayerIsMe = room.currentPlayerId == currentUserId
+
+                    if (currentPlayerIsMe) {
+                        Text(
+                            text = "¡Traduce la palabra para jugar!",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "Palabra: ${translationState.englishWord}",
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "Tiempo restante: $timeLeft segundos",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (timeLeft <= 1) Color.Red else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = playerAnswer,
+                            onValueChange = { playerAnswer = it },
+                            label = { Text("Tu respuesta en español") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 32.dp, vertical = 8.dp)
+                        )
+                        Button(
+                            onClick = {
+                                if (playerAnswer.text.isNotBlank()) {
+                                    gameViewModel.checkTranslationAnswer(roomId, playerAnswer.text)
+                                    // La UI se actualizará automáticamente con el nuevo estado del GameViewModel
+                                } else {
+                                    Toast.makeText(context, "Por favor, escribe tu respuesta.", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("Enviar Respuesta")
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        // Mostrar el tablero pero NO clickable (se pasa una lambda vacía)
+                        Board(board = board) { /* No clickable */ }
+                    } else {
+                        // Cuando no es mi turno y el otro jugador está traduciendo
+                        Text(
+                            text = "Esperando la traducción de ${if (room.currentPlayerId == room.hostId) room.hostEmail?.substringBefore('@') else room.guestEmail?.substringBefore('@')}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        // Mostrar el tablero pero NO clickable (se pasa una lambda vacía)
+                        Board(board = board) { /* No clickable */ }
+                    }
+                }
                 is GameState.GameOver -> {
                     val gameOverState = gameState as GameState.GameOver
                     val room = gameOverState.room
-                    val board = gameOverState.board2D // <-- Acceder al board2D
+                    val board = gameOverState.board2D
 
                     Text(
                         text = gameOverState.message,
@@ -135,6 +207,7 @@ fun MultiplayerGameScreen(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
+                    // El tablero no es clickeable una vez el juego termina
                     Board(board = board) { /* No clickable after game over */ }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -172,7 +245,7 @@ fun MultiplayerGameScreen(
 }
 
 @Composable
-fun Board(board: List<List<Int>>, onColumnClick: (Int) -> Unit) { // <-- Board sigue esperando List<List<Int>>
+fun Board(board: List<List<Int>>, onColumnClick: (Int) -> Unit) {
     Column(
         modifier = Modifier
             .background(Color.Blue)
@@ -184,13 +257,14 @@ fun Board(board: List<List<Int>>, onColumnClick: (Int) -> Unit) { // <-- Board s
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 row.forEachIndexed { colIndex, cell ->
+                    // El clickable se gestiona aquí. Si onColumnClick es una lambda vacía (es decir, {}), no hará nada.
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .aspectRatio(1f)
                             .padding(4.dp)
                             .background(Color.White, CircleShape)
-                            .clickable { onColumnClick(colIndex) },
+                            .clickable { onColumnClick(colIndex) }, // Ahora siempre llama a onColumnClick
                         contentAlignment = Alignment.Center
                     ) {
                         val pieceColor = when (cell) {
